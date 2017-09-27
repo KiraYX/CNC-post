@@ -14,7 +14,7 @@
 #
 # THIS POST REQUIRES A VALID 3 AXIS MACHINE DEFINITION.
 # YOU WILL RECEIVE AN ERROR MESSAGE IF A ROTARY AXIS IS DETECTED IN
-# THE ACTIVE AXIS COMBINATION. 
+# THE ACTIVE AXIS COMBINATION.
 #
 # Associated File List$
 #
@@ -33,7 +33,7 @@
 # CNC 11/02/07  -  Added prv_shftdrl$ = zero
 # CNC 04/08/08  -  X3 release - Removed check for write_ops
 # CNC 01/26/09  -  Initial post update for Mastercam X4
-# CNC 06/09/09  -  Updated MD parameters 
+# CNC 06/09/09  -  Updated MD parameters
 # CNC 02/03/10  -  Initial post update for Mastercam X5
 # CNC 08/17/10  -  Added fix for canned drill cycle incremental mode code output and Z output in incremental mode
 #               -  Added fix for X coolant output
@@ -47,7 +47,7 @@
 # CNC 12/28/11  -  Minor spacing change
 # CNC 01/26/12  -  Added fix for Canned Cycle Tapping logic - Removed 'pcout' and call to 'cuttype'
 # CNC 02/01/12  -  Added support for CD option 'Subprograms before / after main program'
-# CNC 07/24/12  -  X coolant 'With' - separated coolant 'with' logic from cantext 'with' logic to give 
+# CNC 07/24/12  -  X coolant 'With' - separated coolant 'with' logic from cantext 'with' logic to give
 #                    more control over output location of X coolant 'With'.  See pcan1 and pcan1_cool
 # CNC 10/16/12  -  Initial post update for Mastercam X7
 # CNC 02/06/14  -  Initial post update for Mastercam X8
@@ -56,7 +56,7 @@
 # CNC 09/20/17  -  Initial modification by Ian, add air blast function to coolant list
 #
 # --------------------------------------------------------------------------
-# Features:     
+# Features:
 # --------------------------------------------------------------------------
 # This post supports Generic Fanuc code for 3 axis milling.
 # It is designed to support the features of Mastercam X Mill.
@@ -75,7 +75,7 @@
 # - Enhanced tool staging options - enable or disable in CD.  Set stagetltype in post for output type:
 #     Do not stage 1st tool, stage 1st tool at last tool change or stage 1st tool at end of file (peof)
 # - Supports X comments including machine name, group name and group comment output (see pcomment2)
-# - Additional date, time and data path output options (see pheader)  
+# - Additional date, time and data path output options (see pheader)
 # - Additional rigid tapping cycle (separate from original tapping cycle) and initial custom drill
 #     cycle support (see pmisc2$ and pdrlcst$)
 # - Support for 10 additional canned text options for X
@@ -93,9 +93,9 @@
 # Integers:
 #
 # mi1 - Work coordinate system
-#        0 = Reference return is generated and G92 with the 
+#        0 = Reference return is generated and G92 with the
 #            X, Y and Z home positions at file head.
-#        1 = Reference return is generated and G92 with the 
+#        1 = Reference return is generated and G92 with the
 #            X, Y and Z home positions at each tool.
 #        2 = WCS of G54, G55.... based on Mastercam settings.
 #
@@ -129,16 +129,16 @@
 # 2) Metric is applied from the NCI met_tool variable.
 # 3) Incremental mode calculates motion from home position at toolchanges.
 #    The home position is used to define the last position of the tool
-#    for all toolchanges.  
+#    for all toolchanges.
 # 4) The variable 'absinc' is now pre-defined, set mi2 (Misc. Integer) for
 #    the 'top level' absolute/incremental program output.  Subprograms are
 #    updated through the Mastercam dialog settings for sub-programs.
-# 5) Transform subprograms are intended for use with G54.. workshifts. 
+# 5) Transform subprograms are intended for use with G54.. workshifts.
 #
 # END_HEADER$
 #
 # --------------------------------------------------------------------------
-# Debugging and Factory Set Program Switches  
+# Debugging and Factory Set Program Switches
 # --------------------------------------------------------------------------
 #Define Constants
 m_one        := -1
@@ -162,8 +162,8 @@ skp_lead_flgs$ : 0   #Do NOT use v9 style contour flags
 get_1004$    : 1     #Find gcode 1004 with getnextop?
 rpd_typ_v7$  : 0     #Use Version 7 style contour flags/processing?
 strtool_v7$  : 2     #Use Version 7+ toolname?
-tlchng_aft$  : 2     #Delay call to toolchange until move line 
-cant_tlchng$ : 1     #Ignore cantext entry on move with tlchng_aft 
+tlchng_aft$  : 2     #Delay call to toolchange until move line
+cant_tlchng$ : 1     #Ignore cantext entry on move with tlchng_aft
 newglobal$   : 1     #Error checking for global variables
 getnextop$   : 1     #Build the next variable table
 tooltable$   : 3     #Pre-read, call the pwrtt postblock
@@ -180,7 +180,7 @@ stagetool    : 0     #SET_BY_CD 0 = Do not pre-stage tools, 1 = Stage tools
 stagetltype  : 1     #0 = Do not stage 1st tool
                      #1 = Stage 1st tool at last tool change
                      #2 = Stage 1st tool at end of file (peof)
-use_gear     : 0     #Output gear selection code, 0=no, 1=yes  
+use_gear     : 0     #Output gear selection code, 0=no, 1=yes
 min_speed    : 50    #SET_BY_MD Minimum spindle speed
 progname$    : 1     #Use uppercase for program name (sprogname)
 prog_stop    : 1     #Program stop at toolchange: 0=None, 1=M01, 2 = M00
@@ -211,23 +211,23 @@ zia          : 0     #Formatted absolute value for Z incremental calculations
 bld          : 0     #Block delete active
 result       : 0     #Return value for functions
 sav_spc      : 0     #Save spaces
-sav_gcode    : 0     #Gcode saved 
+sav_gcode    : 0     #Gcode saved
 sav_absinc   : 0     #Absolute/Incremental Saved Value
-sav_coolant  : 0     #Coolant saved 
+sav_coolant  : 0     #Coolant saved
 sav_frc_wcs  : 0     #Force work offset flag saved
-toolchng     : 1     #On a toolchange flag 
-spdir2       : 1     #Copy for safe spindle direction calculation 
+toolchng     : 1     #On a toolchange flag
+spdir2       : 1     #Copy for safe spindle direction calculation
 
 #Drill variables
 drlgsel      : -1    #Drill Select Initialize
 drillref     : 0     #Select drill reference
-drlgcode     : 0     #Save Gcode in drill   
-sav_dgcode   : 0     #Drill gcode saved 
+drlgcode     : 0     #Save Gcode in drill
+sav_dgcode   : 0     #Drill gcode saved
 
 #Subprogram variables
-mr_rt_actv   : 0     #Flag to indicate if G51/G68 is active                     
+mr_rt_actv   : 0     #Flag to indicate if G51/G68 is active
                      #0=Off, 1=Rotate initial, 2=G68 Subprogram call/start, 3=Mirror, Neg. enable restore
-mr_rt_rst    : 0     #Flag to restore abs/inc when G51/G68 is active                     
+mr_rt_rst    : 0     #Flag to restore abs/inc when G51/G68 is active
 rt_csav      : 0     #C saved value
 end_sub_mny  : 0     #Many tool setting captured at transform sub end
 comp_type    : 0     #Cutter compensation type - 0=computer, 1=control, 2=wear, 3=reverse wear, 4=off
@@ -284,7 +284,7 @@ strns_rot_on  : "G68"   #Coordinate System Rotation
 strns_rot_off : "G69"   #Coordinate System Rotation Cancel
 
 #Misc. string definitions
-sopen_prn    : "("   #String for open parenthesis "(" 
+sopen_prn    : "("   #String for open parenthesis "("
 sclose_prn   : ")"   #String for close parenthesis ")"
 sdelimiter   : "|"   #String for delimiter
 sg94         : "G94" #Units per minute
@@ -309,29 +309,29 @@ srotaxerror  : "ERROR - ROTARY AXIS DETECTED IN SELECTED AXIS COMBINATION- POST 
 # Motion G code selection
 sg00    : "G0"       #Rapid
 sg01    : "G1"       #Linear feed
-sg02    : "G2"       #Circular interpolation CW 
-sg03    : "G3"       #Circular interpolation CCW 
+sg02    : "G2"       #Circular interpolation CW
+sg03    : "G3"       #Circular interpolation CCW
 sg04    : "G4"       #Dwell
 sgcode  : ""         #Target string
 
 fstrsel sg00 gcode$ sgcode 5 -1
 # --------------------------------------------------------------------------
 # Select work plane G code
-sg17    : "G17"      #XY plane code 
-sg19    : "G19"      #YZ plane code 
-sg18    : "G18"      #XZ plane code 
+sg17    : "G17"      #XY plane code
+sg19    : "G19"      #YZ plane code
+sg18    : "G18"      #XZ plane code
 sgplane : ""         #Target string
 
 fstrsel sg17 plane$ sgplane 3 -1
 # --------------------------------------------------------------------------
-#Select english/metric code 
+#Select english/metric code
 sg20    : "G20"      #Inch code
 sg21    : "G21"      #Metric code
-smetric : ""         #Target string  
+smetric : ""         #Target string
 
 fstrsel sg20 met_tool$ smetric 2 -1
 # --------------------------------------------------------------------------
-#Select reference return code 
+#Select reference return code
 sg28    : "G28"      #First reference point return
 sg30    : "G30"      #Second reference point return
 sg28ref : ""         #Target string
@@ -347,16 +347,16 @@ sccomp  : ""         #Target string
 fstrsel scc0 cc_pos$ sccomp 3 -1
 # --------------------------------------------------------------------------
 # Canned drill cycle string select
-sg81    : "G81"      #drill - no dwell 
-sg81d   : "G82"      #drill - with dwell 
+sg81    : "G81"      #drill - no dwell
+sg81d   : "G82"      #drill - with dwell
 sg83    : "G83"      #peck drill - no dwell
 sg83d   : "G83"      #peck drill - with dwell
 sg73    : "G73"      #chip break - no dwell
 sg73d   : "G73"      #chip break - with dwell
 sg84    : "G84"      #tap - right hand
 sg84d   : "G74"      #tap - left hand
-sg85    : "G85"      #bore #1 - no dwell 
-sg85d   : "G89"      #bore #1 - with dwell 
+sg85    : "G85"      #bore #1 - no dwell
+sg85d   : "G89"      #bore #1 - with dwell
 sg86    : "G86"      #bore #2 - no dwell
 sg86d   : "G86"      #bore #2 - with dwell
 sgm1    : "G76"      #fine bore - no dwell
@@ -367,24 +367,24 @@ sgdrill : ""         #Target string
 
 fstrsel sg81 drlgsel sgdrill 16 -1
 # --------------------------------------------------------------------------
-# Select incremental or absolute G code 
+# Select incremental or absolute G code
 sg90    : "G90"      #Absolute code
 sg91    : "G91"      #Incremental code
-sgabsinc : ""        #Target string  
+sgabsinc : ""        #Target string
 
 fstrsel sg90 absinc$ sgabsinc 2 -1
-# -------------------------------------------------------------------------- 
+# --------------------------------------------------------------------------
 #Canned drill cycle reference height
 sg98    : "G98"      #Reference at initht
-sg99    : "G99"      #Reference at refht     
+sg99    : "G99"      #Reference at refht
 sgdrlref : ""        #Target string
 
 fstrsel sg98 drillref sgdrlref 2 -1
 # --------------------------------------------------------------------------
-# Generate string for spindle 
-sm04    : "M4"       #Spindle reverse 
+# Generate string for spindle
+sm04    : "M4"       #Spindle reverse
 sm05    : "M5"       #Spindle off
-sm03    : "M3"       #Spindle forward 
+sm03    : "M3"       #Spindle forward
 spindle : ""         #Target string
 
 fstrsel sm04 spdir2 spindle 3 -1
@@ -394,7 +394,7 @@ fstrsel sm04 spdir2 spindle 3 -1
 #   in the Machine Definition Manager, Coolant tab, enable first check box
 #   Output of V9 style coolant commands in this post is controlled by scoolant
 sm09    : "M9"       #Coolant Off
-sm08    : "M8"       #Coolant Flood 
+sm08    : "M8"       #Coolant Flood
 sm08_1  : "M8"       #Coolant Mist
 sm08_2  : "M8"       #Coolant Tool
 scoolant : ""        #Target string
@@ -527,8 +527,8 @@ fs2 21  0^7 0^7      #Decimal, 7 place, omit decimal if integer value
 # Toolchange / NC output Variable Formats
 # --------------------------------------------------------------------------
 fmt  "T" 4  t$          #Tool number
-fmt  "T" 4  first_tool$ #First tool used 
-fmt  "T" 4  next_tool$  #Next tool used  
+fmt  "T" 4  first_tool$ #First tool used
+fmt  "T" 4  next_tool$  #Next tool used
 fmt  "D" 4  tloffno$    #Diameter offset number
 fmt  "H" 4  tlngno$     #Length offset number
 fmt  "G" 4  g_wcs       #WCS G address
@@ -573,12 +573,12 @@ fmt "TOOL - "      4   tnote    #Note format
 fmt "DIA. OFF. - " 4   toffnote #Note format
 fmt "LEN. - "      4   tlngnote #Note format
 fmt "TOOL DIA. - " 1   tldia$   #Note format
-fmt "XY STOCK TO LEAVE - " 2  xy_stock #Note format 
-fmt "Z STOCK TO LEAVE - "  2  z_stock  #Note format 
+fmt "XY STOCK TO LEAVE - " 2  xy_stock #Note format
+fmt "Z STOCK TO LEAVE - "  2  z_stock  #Note format
 # --------------------------------------------------------------------------
 fmt     4   year2       #Calculated year value
 fmt     18  time2       #Capture 24-hour time value into 'time2' variable
-fmt     19  hour        #Hour 
+fmt     19  hour        #Hour
 fmt     20  min         #Minutes
 year2 = year$ + 2000
 
@@ -586,10 +586,10 @@ year2 = year$ + 2000
 # Tool Comment / Manual Entry Section
 # --------------------------------------------------------------------------
 ptoolcomment    #Comment for tool
-      tnote = t$, toffnote = tloffno$, tlngnote = tlngno$
-      if tool_info = 1 | tool_info = 3,
+      tnote = t$, toffnote = tloffno$, tlngnote = tlngno$ #Toolnum Diaoffset Lenoffset
+      if tool_info = 1 | tool_info = 3, #if add tool comments with T
         sopen_prn, pstrtool, sdelimiter, *tnote, sdelimiter, *toffnote, sdelimiter, *tlngnote, sdelimiter, *tldia$, sclose_prn, e$
-
+				# ( )
 ptooltable      #Tooltable output
       sopen_prn, *t$, sdelimiter, pstrtool, sdelimiter, *tlngno$,
         [if comp_type > 0 & comp_type < 4, sdelimiter, *tloffno$, sdelimiter, *scomp_type, sdelimiter, *tldia$],
@@ -631,7 +631,7 @@ ptime           #Convert 24-hour time format into 12-hour AM/PM format
       if time$ > 12, " PM"
       else, " AM"
 
-pheader$         #Call before start of file                         
+pheader$         #Call before start of file
       if subs_before, " ", e$ #header character is output from peof when subs are output before main
       else, "%", e$
       sav_spc = spaces$
@@ -652,13 +652,13 @@ pheader$         #Call before start of file
       sopen_prn, "MATERIAL - ", *stck_matl$, sclose_prn, e$
       spaces$ = sav_spc
 
-psof0$           #Start of file for tool zero                        
+psof0$           #Start of file for tool zero
       psof$
 
 pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
       if mr_rt_actv = zero,
         [
-        #Transform Rotate, set mr_rt_actv if user selected 'coordinates' 
+        #Transform Rotate, set mr_rt_actv if user selected 'coordinates'
         #Mirror is set on sub call
         if sub_trnstyp$ = one & sub_trnmthd$ = two,
           [
@@ -667,7 +667,7 @@ pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
           ]
         ]
 
-psof$            #Start of file for non-zero tool number             
+psof$            #Start of file for non-zero tool number
       pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
       toolchng = one
       if ntools$ = one,
@@ -709,7 +709,7 @@ psof$            #Start of file for non-zero tool number
       toolchng = zero
       c_msng$ #Single tool subprogram call
 
-ptlchg0$         #Call from NCI null tool change (tool number repeats)                        
+ptlchg0$         #Call from NCI null tool change (tool number repeats)
       pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
       pcom_moveb
       pcheckaxis
@@ -734,7 +734,7 @@ ptlchg0$         #Call from NCI null tool change (tool number repeats)
       pcom_movea
       c_msng$ #Single tool subprogram call
 
-ptlchg$          #Tool change                                        
+ptlchg$          #Tool change
       pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
       toolchng = one
       if mi1$ = one, #Work coordinate system
@@ -814,10 +814,10 @@ pretract        #End of tool path, toolchange
       absinc$ = sav_absinc
       coolant$ = sav_coolant
 
-peof0$           #End of file for tool zero               
+peof0$           #End of file for tool zero
       peof$
 
-peof$            #End of file for non-zero tool           
+peof$            #End of file for non-zero tool
       pretract
       comment$
       if stagetool = 1 & stagetltype = 2, pbld, n$, *first_tool$, e$
@@ -891,12 +891,12 @@ pspindle        #Spindle speed calculations for RPM
       spdir2 = fsg3(spdir$)
 
 pq$              #Setup post based on switch settings
-      stagetool = bldnxtool$  #Set stagetool from CD setting 
+      stagetool = bldnxtool$  #Set stagetool from CD setting
 
-ptoolend$        #End of tool path, before reading new tool data               
+ptoolend$        #End of tool path, before reading new tool data
       !speed, !spdir2
 
-ptlchg1002$      #Call at actual toolchange, end last path here                        
+ptlchg1002$      #Call at actual toolchange, end last path here
       if op_id$ <> prv_op_id$, pset_mach   #Read machine def parameters
       pspindle
       whatline$ = four #Required for vector toolpaths
@@ -924,14 +924,14 @@ ptlchg1002$      #Call at actual toolchange, end last path here
 #The variables for absolute output are xabs, yabs, zabs.
 #The variables for incremental output are xinc, yinc, zinc.
 # --------------------------------------------------------------------------
-prapidout       #Output to NC of linear movement - rapid               
+prapidout       #Output to NC of linear movement - rapid
       pcan1, pbld, n$, sgplane, `sgcode, sgabsinc, pccdia,
         pxout, pyout, pzout, strcantext, pscool, e$
       #Modify following line to customize output for high-speed toolpath
       #tool inspection/change points
       if rpd_typ$ = 7, pbld, n$, "M00", "(TOOL INSPECTION POINT - POST CUSTOMIZATION REQUIRED)", e$
 
-plinout         #Output to NC of linear movement - feed                    
+plinout         #Output to NC of linear movement - feed
       pcan1, pbld, n$, sgplane, `sgcode, sgabsinc, pccdia,
         pxout, pyout, pzout, feed, strcantext, pscool, e$
       #Modify following line to customize output for high-speed toolpath
@@ -973,22 +973,22 @@ pdwl_spd$        #Call from NCI gcode 4
       else, pcan1, pbld, n$, strcantext, e$
       pcan2
 
-prapid$          #Output to NC of linear movement - rapid               
+prapid$          #Output to NC of linear movement - rapid
       pncoutput
 
-pzrapid$         #Output to NC of linear movement - rapid Z only    
+pzrapid$         #Output to NC of linear movement - rapid Z only
       pncoutput
 
-plin$            #Output to NC of linear movement - feed                    
+plin$            #Output to NC of linear movement - feed
       pncoutput
 
-pz$              #Output to NC of linear movement - feed Z only          
+pz$              #Output to NC of linear movement - feed Z only
       pncoutput
 
-pmx$             #Output to NC of vector NCI          
+pmx$             #Output to NC of vector NCI
       pncoutput
 
-pcir$            #Output to NC of circular interpolation                                
+pcir$            #Output to NC of circular interpolation
       pncoutput
 
 # --------------------------------------------------------------------------
@@ -1001,7 +1001,7 @@ pfbld           #Force - block delete
       "/"
 
 pccdia          #Cutter Compensation
-      #Force Dxx#   
+      #Force Dxx#
       if prv_cc_pos$ <> cc_pos$ & cc_pos$, prv_tloffno$ = c9k
       sccomp
       if cc_pos$, tloffno$
@@ -1223,7 +1223,7 @@ pmisc2_2$        #Canned Rigid Tapping Cycle
       pcan1, pbld, n$, pxout, pyout, pzout, prdrlout, strcantext, e$
       pcom_movea
 
-pdrlcst_2$       #Custom drill cycles 8 - 19, additional points (user option)     
+pdrlcst_2$       #Custom drill cycles 8 - 19, additional points (user option)
       #Use this postblock to customize drilling cycles 8 - 19
       if drillcyc$ = 8, pdrlcst8_2
       else,
@@ -1246,7 +1246,7 @@ pcanceldc$       #Cancel canned drill cycle
       pcan
       pcan1, pbld, n$, sg80, strcantext, e$
       if (drillcyc$ = 3 | drillcyc$ = 7) & tap_feedtype, pbld, n$, sg94, e$
-      result = newfs(15, feed)  #Reset the output format for 'feed'      
+      result = newfs(15, feed)  #Reset the output format for 'feed'
       pcan2
 
 # --------------------------------------------------------------------------
@@ -1405,7 +1405,7 @@ psub_end_s$      #End in sub level
       prv_absinc$ = -1
 
 # --------------------------------------------------------------------------
-# Canned Text 
+# Canned Text
 # --------------------------------------------------------------------------
 pcan            #Canned text - before output call
       strcantext = sblank
@@ -1462,7 +1462,7 @@ pcan1           #Canned text - with move
         ]
       if cstop$, strcantext = strcantext + sm00
       if cgstop$, strcantext = strcantext + sm01
-      #Output of strcantext occurs at the end of the output line 
+      #Output of strcantext occurs at the end of the output line
 
 pcan1_cool      #Canned text Coolant - with move
       if cant_no$ > zero,
@@ -1726,28 +1726,28 @@ pparameter$     #Read operation parameters
 # --------------------------------------------------------------------------
 # Parameter lookup tables - You must adjust the size value if you add or remove any parameters to/from these tables!
 # --------------------------------------------------------------------------
-# Machine Definition Parameters 
+# Machine Definition Parameters
 fprmtbl 17000   4    #Table Number, Size
-#       Param   Variable to load value into 
+#       Param   Variable to load value into
         17605   min_speed    #Minimum spindle speed
         17055   maxfeedpm    #Limit for feed in inch/min
         17063   maxfeedpm_m  #Limit for feed in mm/min
         17101   all_cool_off #First coolant off command shuts off ALL coolant options
 
-# Control Definition Parameters 
+# Control Definition Parameters
 fprmtbl 18000   1    #Table Number, Size
-#       Param   Variable to load value into 
+#       Param   Variable to load value into
         18713   subs_before  #Subprograms output before or after main program
 
-# Toolpath Group Parameters 
+# Toolpath Group Parameters
 fprmtbl 19000   0    #Table Number, Size
-#       Param   Variable to load value into 
+#       Param   Variable to load value into
 
 # --------------------------------------------------------------------------
 pset_mach       #Set post switches by reading machine def parameters
       rot_ax_cnt = 0
       rotaxerror = 0
-      #maxfeedpm = 999999       #Uncomment these variables to force use of machine def values as initial lowest max feedrate value 
+      #maxfeedpm = 999999       #Uncomment these variables to force use of machine def values as initial lowest max feedrate value
       #maxfeedpm_m = 9999999    #Otherwise the default (post) initialization setting is used as initial value
       !maxfeedpm, !maxfeedpm_m
 
@@ -1767,7 +1767,7 @@ pmachineinfo$   #Machine information parameters postblock
       #rd_tlpathgrp is used to call pmachineinfo postblock and read the active toolpath group parameters
       #"-->pmachineinfo", ~prmcode$, "  ", ~sparameter$, e$  #Do not uncomment if being called from pprep$ - see pprep comment
 
-      #Read parameter lookup tables - 
+      #Read parameter lookup tables -
       if prmcode$ >= 17000 & prmcode$ < 18000, result = fprm(17000) #Run the parameter table for Machine Definition Parameters
       if prmcode$ >= 18000 & prmcode$ < 19000, result = fprm(18000) #Run the parameter table for Control Definition Parameters
       #Leave line below commented until you enter values in related lookup tables
@@ -1790,7 +1790,7 @@ pmachineinfo$   #Machine information parameters postblock
       !maxfeedpm, !maxfeedpm_m
 
 # --------------------------------------------------------------------------
-# POST TEXT 
+# POST TEXT
 # --------------------------------------------------------------------------
 [CTRL_MILL|DEFAULT]
 [misc integers]
@@ -2019,4 +2019,3 @@ pmachineinfo$   #Machine information parameters postblock
 9. "M9"
 10. "M10"
 [CTRL_TEXT_END]
-
