@@ -176,7 +176,7 @@ ltol_m       : 0.05  #Length tolerance for arccheck, metric
 vtol_m       : 0.0025#System tolerance, metric
 maxfeedpm_m  : 10000 #SET_BY_MD Limit for feed in mm/min
 force_wcs    : yes$  #Force WCS output at every toolchange?
-stagetool    : 0     #SET_BY_CD 0 = Do not pre-stage tools, 1 = Stage tools
+stagetool    : 1     #SET_BY_CD 0 = Do not pre-stage tools, 1 = Stage tools
 stagetltype  : 1     #0 = Do not stage 1st tool
                      #1 = Stage 1st tool at last tool change
                      #2 = Stage 1st tool at end of file (peof)
@@ -184,7 +184,7 @@ use_gear     : 0     #Output gear selection code, 0=no, 1=yes
 min_speed    : 50    #SET_BY_MD Minimum spindle speed
 progname$    : 1     #Use uppercase for program name (sprogname)
 prog_stop    : 1     #Program stop at toolchange: 0=None, 1=M01, 2 = M00
-tool_info    : 2     #Output tooltable information?
+tool_info    : 3     #Output tooltable information?
                      #0 = Off - Do not output any tool comments or tooltable
                      #1 = Tool comments only
                      #2 = Tooltable in header - no tool comments at T/C
@@ -193,7 +193,7 @@ tlchg_home   : no$   #Zero return X and Y axis prior to tool change?
 
 # The following three initializations are used for full arc and helix arc output when the CD
 #   is set to output R or signed R for arcs
-arctype$     : 2     #Arc center type XY plane 1=abs, 2=St-Ctr, 3=Ctr-St, 4=unsigned inc.
+arctype$     : 2     #Arc center type XY plane 1=abs, 2=Start-Center, 3=Center-Start, 4=unsigned inc.
 arctypexz$   : 2     #Arc center type XZ plane 1=abs, 2=St-Ctr, 3=Ctr-St, 4=unsigned inc.
 arctypeyz$   : 2     #Arc center type YZ plane 1=abs, 2=St-Ctr, 3=Ctr-St, 4=unsigned inc.
 
@@ -272,8 +272,8 @@ srminus      : "R-"
 sblank       : ""
 
 #Cantext string definitions (spaces must be padded here)
-sm00         : "M00"
-sm01         : "M01"
+sm00         : "M00"    #End program
+sm01         : "M01"    #Pause
 strtextno    : ""
 strcantext   : ""
 
@@ -311,8 +311,10 @@ sg00    : "G0"       #Rapid
 sg01    : "G1"       #Linear feed
 sg02    : "G2"       #Circular interpolation CW 
 sg03    : "G3"       #Circular interpolation CCW 
-sg04    : "G4"       #Dwell
+sg04    : "G4"       #Dwell Pause
 sgcode  : ""         #Target string
+
+sg05    : "G05.1 Q1" #Turn on preread function - ian 20171009
 
 fstrsel sg00 gcode$ sgcode 5 -1
 # --------------------------------------------------------------------------
@@ -405,10 +407,10 @@ fstrsel sm09 coolant$ scoolant 4 -1
 # Note: To enable X style coolant, click on the General Machine Parameters icon
 #   in the Machine Definition Manager, Coolant tab, disable first check box
 #   Output of X style coolant commands in this post is controlled by pcan, pcan1, & pcan2
-scool50 : "M8"                 #Coolant 1 on value
-scool51 : "M9"                 #Coolant 1 off value
-scool52 : "M17"                 #Coolant 2 on value Air blast
-scool53 : "M16"                 #Coolant 2 off value Air blast
+scool50 : "M8 (COOLANT ON)"                 #Coolant 1 on value
+scool51 : "M9 (COOLANT OFF)"                 #Coolant 1 off value
+scool52 : "M17 (AIRBLAST ON)"                #Coolant 2 on value Air blast
+scool53 : "M16 (AIRBLAST OFF)"                #Coolant 2 off value Air blast
 scool54 : "M17"                #Coolant 3 on value Air blast
 scool55 : "M16"                #Coolant 3 off value Air blast
 scool56 : "M8(Coolant4=ON)"    #Coolant 4 on value
@@ -569,10 +571,10 @@ fmt  "Q" 2  shftdrl$    #Fine bore tool shift
 fmt  "R" 2  refht_a     #Reference height
 fmt  "R" 2  refht_i     #Reference height
 # --------------------------------------------------------------------------
-fmt "TOOL - "      4   tnote    #Note format
-fmt "DIA. OFF. - " 4   toffnote #Note format
-fmt "LEN. - "      4   tlngnote #Note format
-fmt "TOOL DIA. - " 1   tldia$   #Note format
+fmt "TOOL-"      4   tnote    #Note format
+fmt "DIA-" 4   toffnote #Note format
+fmt "LEN-"      4   tlngnote #Note format
+fmt "TDIA-" 1   tldia$   #Note format
 fmt "XY STOCK TO LEAVE - " 2  xy_stock #Note format 
 fmt "Z STOCK TO LEAVE - "  2  z_stock  #Note format 
 # --------------------------------------------------------------------------
@@ -586,19 +588,21 @@ year2 = year$ + 2000
 # Tool Comment / Manual Entry Section
 # --------------------------------------------------------------------------
 ptoolcomment    #Comment for tool
-      tnote = t$, toffnote = tloffno$, tlngnote = tlngno$
-      if tool_info = 1 | tool_info = 3,
+      tnote = t$, toffnote = tloffno$, tlngnote = tlngno$  #assign value
+      if tool_info = 1 | tool_info = 3,  #logic
         sopen_prn, pstrtool, sdelimiter, *tnote, sdelimiter, *toffnote, sdelimiter, *tlngnote, sdelimiter, *tldia$, sclose_prn, e$
 
 ptooltable      #Tooltable output
-      sopen_prn, *t$, sdelimiter, pstrtool, sdelimiter, *tlngno$,
+      #"(TOOL TABLE)", e$
+	  sopen_prn, *t$, sdelimiter, pstrtool, sdelimiter, *tlngno$,
         [if comp_type > 0 & comp_type < 4, sdelimiter, *tloffno$, sdelimiter, *scomp_type, sdelimiter, *tldia$],
-        [if xy_stock <> 0 | z_stock <> 0, sdelimiter, *xy_stock, sdelimiter, *z_stock],
+        #[if xy_stock <> 0 | z_stock <> 0, sdelimiter, *xy_stock, sdelimiter, *z_stock],
         sclose_prn, e$
       xy_stock = 0  #Reset stock to leave values
       z_stock = 0   #Reset stock to leave values
+	  #"(/TOOL TABLE)", e$
 
-pstrtool        #Comment for tool
+pstrtool        #Comment for tool 
       if strtool$ <> sblank,
         [
         strtool$ = ucase(strtool$)
@@ -632,31 +636,37 @@ ptime           #Convert 24-hour time format into 12-hour AM/PM format
       else, " AM"
 
 pheader$         #Call before start of file                         
-      if subs_before, " ", e$ #header character is output from peof when subs are output before main
+	  #"(HEADER)", e$
+	  if subs_before, " ", e$ #header character is output from peof when subs are output before main
       else, "%", e$
       sav_spc = spaces$
       spaces$ = 0
       *progno$, sopen_prn, sprogname$, sclose_prn, e$
+	  sopen_prn, "DORABOT.INC - POST BY IAN", sclose_prn, e$
+	  sopen_prn, "HARDINGE GX710 X710 Y400 Z430", sclose_prn, e$
       #sopen_prn, "PROGRAM NAME - ", sprogname$, sclose_prn, e$
-      sopen_prn, "DATE=DD-MM-YY - ", date$, " TIME=HH:MM - ", time$, sclose_prn, e$ #Date and time output Ex. 12-02-05 15:52
+      #sopen_prn, "DATE=DD-MM-YY - ", date$, " TIME-", time$, sclose_prn, e$ #Date and time output Ex. 12-02-05 15:52
       #sopen_prn, "DATE - ", month$, "-", day$, "-", year$, sclose_prn, e$  #Date output as month,day,year - Ex. 02-12-05
-      #sopen_prn, "DATE - ", *smonth, " ", day$, " ", *year2, sclose_prn, e$ #Date output as month,day,year - Ex. Feb. 12 2005
+      sopen_prn, "DATE - ", *smonth, " ", day$, " ", *year2, sclose_prn, e$ #Date output as month,day,year - Ex. Feb. 12 2005
       #sopen_prn, "TIME - ", time$, sclose_prn, e$  #24 hour time output - Ex. 15:52
       #sopen_prn, "TIME - ", ptime sclose_prn, e$  #12 hour time output 3:52 PM
       #spathnc$ = ucase(spathnc$)
       #smcname$ = ucase(smcname$)
       #stck_matl$ = ucase(stck_matl$)
       snamenc$ = ucase(snamenc$)
-      sopen_prn, "MCX FILE - ", *smcpath$, *smcname$, *smcext$, sclose_prn, e$
-      sopen_prn, "NC FILE - ", *spathnc$, *snamenc$, *sextnc$, sclose_prn, e$
+      #sopen_prn, "MCX FILE - ", *smcpath$, *smcname$, *smcext$, sclose_prn, e$
+      #sopen_prn, "NC FILE - ", *spathnc$, *snamenc$, *sextnc$, sclose_prn, e$
       sopen_prn, "MATERIAL - ", *stck_matl$, sclose_prn, e$
       spaces$ = sav_spc
+	  #"(/HEADER)", e$
 
 psof0$           #Start of file for tool zero                        
-      psof$
+      "(TOOL ZERO)", e$
+	  psof$
 
 pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
-      if mr_rt_actv = zero,
+      #"(PXFORM TYPE)", e$
+	  if mr_rt_actv = zero,
         [
         #Transform Rotate, set mr_rt_actv if user selected 'coordinates' 
         #Mirror is set on sub call
@@ -668,7 +678,8 @@ pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
         ]
 
 psof$            #Start of file for non-zero tool number             
-      pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
+      #"(SOF)", e$
+	  pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
       toolchng = one
       if ntools$ = one,
         [
@@ -676,13 +687,15 @@ psof$            #Start of file for non-zero tool number
         stagetool = m_one
         !next_tool$
         ]
-      pbld, n$, *smetric, e$ #G21 metric unit
-      pbld, n$, *sgcode, e$ #G0 rapid move
-	  pbld, n$, *sgplane, e$ #G17 select XY plane
-	  pbld, n$, scc0, e$ #G40 cancel radius compensation
-	  pbld, n$, sg49, e$ #G49 cancel tool length compensation
-	  pbld, n$, sg80, e$ #G80 cancel drill cycle
-	  pbld, n$, *sgabsinc, e$ #G90 absolute coodinate system
+	  "(PARAMETER INIT FOR SAFETY)", e$
+      pbld, n$, *smetric, "(METRIC UNIT)", e$ #G21 metric unit
+      pbld, n$, *sgcode, "(RAPID MOVE)", e$ #G0 rapid move
+	  pbld, n$, *sgplane, "(SELECT XY PLANE)", e$ #G17 select XY plane
+	  pbld, n$, scc0, "(CANCEL RADIUS COMPENSATION)", e$ #G40 cancel radius compensation
+	  pbld, n$, sg49, "(CANCEL TOOL LENGTH COMPENSATION)", e$ #G49 cancel tool length compensation
+	  pbld, n$, sg80, "(CANCEL DRILL CYCLE)", e$ #G80 cancel drill cycle
+	  pbld, n$, *sgabsinc, "(ABSOLUTE COODINATE)", e$ #G90 absolute coodinate system
+	  n$, *sm01, "(INIT FINISHED CHECK STATUS)", e$ #Add M01
       sav_absinc = absinc$
       if mi1$ <= one, #Work coordinate system
         [
@@ -698,19 +711,31 @@ psof$            #Start of file for non-zero tool number
       ptoolcomment
       comment$
       pcan
-      pbld, n$, *t$, sm06, e$
+	  #First tool change
+      pbld, n$, *t$, sm06, "(FIRST TOOL)", e$
       if mi1$ > one, absinc$ = zero
-      pcan1, pbld, n$, *sgcode, *sgabsinc, pwcs, pfxout, pfyout,
-        [if nextdc$ <> 7, *speed, *spindle], pgear, strcantext, e$
-      pbld, n$, sg43, *tlngno$, pfzout, pscool, pstagetool, e$
+      pcan1, pbld, n$, *sgcode, *sgabsinc, "(READY TO TOOLPATH START POINT)", e$
+	  n$, pwcs, pfxout, pfyout, "(XY LOCATION)", e$
+	  n$, *sm01, "(CHECK POINT)", e$
+	  "(SWITCH TO SINGLE BLOCK MODE BEFORE APPROCHING)", e$
+	  n$, [if nextdc$ <> 7, *speed, *spindle], "(SPINDLE CW)", pgear, strcantext, e$
+	  #Tool length compensation
+      pbld, n$, sg43, *tlngno$, "(TOOL LENGTH COMPENSATION)", e$
+	  #n$, *sm01, "(CHECK TOOL HEIGHT)", e$
+	  n$, pfzout, "(DOWN TO RETRACT PLANE)", e$
+	  #n$, *sm01, "(CHECK TOOL HEIGHT)", e$
+	  n$, pscool, e$
+	  n$, pstagetool, e$
       absinc$ = sav_absinc
       pbld, n$, sgabsinc, e$
       pcom_movea
       toolchng = zero
       c_msng$ #Single tool subprogram call
+	  #"(/SOF)", e$
 
 ptlchg0$         #Call from NCI null tool change (tool number repeats)                        
-      pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
+      #"(TOOL CHANGE 0 REPEAT TOOL NUM)", e$
+	  pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
       pcom_moveb
       pcheckaxis
       c_mmlt$ #Multiple tool subprogram call
@@ -733,16 +758,19 @@ ptlchg0$         #Call from NCI null tool change (tool number repeats)
       else, prapidout
       pcom_movea
       c_msng$ #Single tool subprogram call
+	  #"(/TOOL CHANGE 0)", e$
 
 ptlchg$          #Tool change                                        
-      pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
+      "(TOOL CHANGE)", e$
+	  pxformtype  #Set flag to indicate if G51/G68 is active based on transform type
       toolchng = one
       if mi1$ = one, #Work coordinate system
         [
         pfbld, n$, *sg28ref, "X0.", "Y0.", e$
         pfbld, n$, sg92, *xh$, *yh$, *zh$, e$
         ]
-      if prog_stop = 1, pbld, n$, *sm01, e$
+      #Pause before change tool
+	  if prog_stop = 1, pbld, n$, *sm01, e$  #Add M01
       if prog_stop = 2, pbld, n$, *sm00, e$
       pcom_moveb
       pcheckaxis
@@ -751,30 +779,48 @@ ptlchg$          #Tool change
       comment$
       pcan
       result = newfs(15, feed)  #Reset the output format for 'feed'
-      pbld, n$, *t$, sm06, e$
+      #Tool change in action
+	  pbld, n$, *t$, sm06, "(TOOL CHANGE ACTION)", e$
       sav_absinc = absinc$
       if mi1$ > one, absinc$ = zero
-      pcan1, pbld, n$, *sgcode, *sgabsinc, pwcs, pfxout, pfyout,
-        [if nextdc$ <> 7, *speed, *spindle], pgear, strcantext, e$
-      pbld, n$, sg43, *tlngno$, pfzout, pscool, pstagetool, e$
+      pcan1, pbld, n$, *sgcode, *sgabsinc, "(ABSOLUTE COODINATE)", e$
+	  n$, pwcs, pfxout, pfyout, "(LOCATE XY)", e$
+	  n$, *sm01, "(CHECK POINT)", e$
+	  "(SWITCH TO SINGLE BLOCK MODE BEFORE APPROACHING)", e$
+	  n$, [if nextdc$ <> 7, *speed, *spindle], "(SPINDLE CW)", pgear, strcantext, e$
+	  #Tool length compensation
+      pbld, n$, sg43, *tlngno$, "(TOOL LENGTH COMPENSATE)", e$
+	  #n$, *sm01, "(CHECK TOOL HEIGHT)", e$
+	  n$, pfzout, "(DOWN TO RETRACT PLANE)", e$
+	  #n$, *sm01, "(CHECK TOOL HEIGHT)", e$
+	  n$, pscool, e$
+	  n$, pstagetool, e$
       absinc$ = sav_absinc
       pbld, n$, sgabsinc, e$
       pcom_movea
       toolchng = zero
       c_msng$ #Single tool subprogram call
+	  n$, sg05, "(PREREAD ON)", e$  #Enable preread feature
+	  #"(/TOOL CHANGE)", e$
 
 pstagetool      #Pre-stage tools
-      if stagetool = 1,
-        [
-        if ttblend$,  #Check for last toolchange
-          [
-          if stagetltype = 1, *next_tool$  #stage first tool at last toolchange
-          ]
-        else, *next_tool$ #stage tool at every toolchange
-        ]
+	  #*next_tool$, e$
+      "(STAGE TOOL)", e$
+	  #if stagetool = 1,
+       # [
+        #"(STAGE = 1)", e$
+		#if ttblend$,  #Check for last toolchange
+          #[
+		  #"(TTBLENDS)", e$
+          #if stagetltype = 1, *first_tool$, "(FIRST)"  #stage first tool at last toolchange
+          #]
+        #else, *next_tool$ "(NEXT)" #stage tool at every toolchange
+        #]
+	  #"(/STAGE TOOL)", e$
 
 pretract        #End of tool path, toolchange
-      sav_absinc = absinc$
+      "(PRETRACT)", e$
+	  sav_absinc = absinc$
       absinc$ = one
       sav_coolant = coolant$
       coolant$ = zero
@@ -808,20 +854,26 @@ pretract        #End of tool path, toolchange
       #cc_pos is reset in the toolchange here
       cc_pos$ = zero
       gcode$ = zero
-      pbld, n$, sccomp, *sm05, psub_end_mny, e$
-      pbld, n$, sgabsinc, sgcode, *sg28ref, "Z0.", scoolant, e$
-      if nextop$ = 1003 | tlchg_home, pbld, n$, *sg28ref, "X0.", "Y0.", e$
-      absinc$ = sav_absinc
+      pbld, n$, sccomp, *sm05, "(SPINDLE STOP)", psub_end_mny, e$
+      pbld, n$, sgabsinc, sgcode, "(INCREMENTAL COODINATE)", e$
+	  n$, *sg28ref, "Z0.", scoolant, "(RETURN Z REF POINT)", e$
+      if nextop$ = 1003 | tlchg_home, pbld, e$
+	  		n$, *sg28ref, "X0.", "Y0.", "(RETURN XY REF POINT)", e$
+      n$, *sm01, "(RETRACT FINISHED)", e$
+	  absinc$ = sav_absinc
       coolant$ = sav_coolant
+	  "(/PRETRACT)", e$
 
 peof0$           #End of file for tool zero               
-      peof$
+      "(END OF FILE 0)", e$
+	  peof$
 
 peof$            #End of file for non-zero tool           
-      pretract
+      "(EOF)", e$
+	  pretract
       comment$
       if stagetool = 1 & stagetltype = 2, pbld, n$, *first_tool$, e$
-      n$, "M30", e$
+      n$, "M30", "(END PROGRAM AND STOP)", e$ #End program and stop
       if subs_before, #Merge subs before main program
         [             #At this point, the NC / Main program level is blank (Main prg was written to ext with subs before)
         subout$ = zero
@@ -842,6 +894,7 @@ peof$            #End of file for non-zero tool
         ]
       subout$ = zero
       "%", e$
+	  "(/EOF)", e$
 
 pwcs            #G54+ coordinate setting at toolchange
       if mi1$ > one,
@@ -874,12 +927,14 @@ pgear           #Find spindle gear from lookup table
 
 #Toolchange setup
 pspindchng      #Spindle speed change
-      if prv_spdir2 <> spdir2 & prv_speed <> zero, pbld, n$, *sm05, e$
+	  #"(SPIN CHANGE)", e$
+      if prv_spdir2 <> spdir2 & prv_speed <> zero, pbld, n$, *sm05, "(SPINDLE STOP)", e$
       if prv_speed <> speed | prv_spdir2 <> spdir2,
         [
         if speed, pbld, n$, *speed, *spindle, pgear, e$
         ]
       !speed, !spdir2
+	  #"(/SPIN CHANGE)", e$
 
 pspindle        #Spindle speed calculations for RPM
       speed = abs(ss$)
@@ -892,7 +947,8 @@ pspindle        #Spindle speed calculations for RPM
 
 pq$              #Setup post based on switch settings
       stagetool = bldnxtool$  #Set stagetool from CD setting 
-
+	  #stagetool = 1
+	  
 ptoolend$        #End of tool path, before reading new tool data               
       !speed, !spdir2
 
@@ -925,22 +981,28 @@ ptlchg1002$      #Call at actual toolchange, end last path here
 #The variables for incremental output are xinc, yinc, zinc.
 # --------------------------------------------------------------------------
 prapidout       #Output to NC of linear movement - rapid               
-      pcan1, pbld, n$, sgplane, `sgcode, sgabsinc, pccdia,
+      #"(RAPID)", e$
+	  pcan1, pbld, n$, sgplane, `sgcode, sgabsinc, pccdia,
         pxout, pyout, pzout, strcantext, pscool, e$
+	  #"(/RAPID)", e$
       #Modify following line to customize output for high-speed toolpath
       #tool inspection/change points
       if rpd_typ$ = 7, pbld, n$, "M00", "(TOOL INSPECTION POINT - POST CUSTOMIZATION REQUIRED)", e$
 
 plinout         #Output to NC of linear movement - feed                    
-      pcan1, pbld, n$, sgplane, `sgcode, sgabsinc, pccdia,
+      #"(LINEAR)", e$
+	  pcan1, pbld, n$, sgplane, `sgcode, sgabsinc, pccdia,
         pxout, pyout, pzout, feed, strcantext, pscool, e$
+	  #"(/LINEAR)", e$
       #Modify following line to customize output for high-speed toolpath
       #tool inspection/change points
       if rpd_typ$ = 7, pbld, n$, "M00", "(TOOL INSPECTION POINT - POST CUSTOMIZATION REQUIRED)", e$
 
 pcirout         #Output to NC of circular interpolation
-      pcan1, pbld, n$, sgplane, sgcode, sgabsinc, pccdia,
+      #"(CIRCULAR)", e$
+	  pcan1, pbld, n$, sgplane, sgcode, sgabsinc, pccdia,
         pxout, pyout, pzout, parc, feed, strcantext, pscool, e$
+	  #"(/CIRCULAR)", e$
 
 pcom_moveb      #Common motion preparation routines, before
       pxyzcout
@@ -1868,7 +1930,7 @@ pmachineinfo$   #Machine information parameters postblock
 8. "M8"
 9. "M9"
 10. "M10"
-[CTRL_MILL|JY MILL 4030 CONTROL]
+[CTRL_MILL|FANUC 0i-MF CONTROLLER]
 [misc integers]
 1. "Work Coordinates [0-1=G92, 2=G54's]"//2
 2. "Absolute/Incremental, top level [0=ABS, 1=INC]"
